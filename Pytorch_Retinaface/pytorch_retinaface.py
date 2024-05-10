@@ -57,7 +57,7 @@ class Pytorch_RetinaFace:
         self.net.to(self.device)
         return self.net
 
-    def center_and_crop_rescale(self, image, dets, scale_factor=4, shift_factor=0.35):
+    def center_and_crop_rescale(self, image, dets, scale_factor=4, shift_factor=0.35, aspect_ratio=1.0):
         cropped_imgs = []
         for index, bbox in enumerate(dets):
             if bbox[4] < self.vis_thres:
@@ -69,7 +69,8 @@ class Pytorch_RetinaFace:
 
             # New height and width based on scale factor
             new_face_height = int(face_height * scale_factor)
-            new_face_width = int(new_face_height * (face_width / face_height))
+            # new_face_width = int(new_face_height * (face_width / face_height))
+            new_face_width = int(new_face_height / aspect_ratio)
 
             # Center coordinates of the detected face
             center_x = x1 + face_width // 2

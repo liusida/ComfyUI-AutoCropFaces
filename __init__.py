@@ -45,7 +45,7 @@ class AutoCropFaces:
             },
         }
 
-    RETURN_TYPES = ("IMAGE",)
+    RETURN_TYPES = ("IMAGE", "CROP_DATA")
     RETURN_NAMES = ("face",)
 
     FUNCTION = "auto_crop_faces"
@@ -53,17 +53,23 @@ class AutoCropFaces:
     CATEGORY = "Faces"
 
     def auto_crop_faces(self, image, max_number_of_faces, index_of_face, scale_factor, shift_factor, aspect_ratio):
+        original_size = (1, 1)
+        left, top, right, bottom = (0, 0, 1, 1)
         #TODO: currently only support one single image. No batch.
         image_without_batch = image[0]
+        right, bottom = image_without_batch.shape[:2]
+        original_size = (right, bottom)
         image_255 = image_without_batch * 255
         rf = Pytorch_RetinaFace(top_k=50, keep_top_k=max_number_of_faces)
         dets = rf.detect_faces(image_255)
-        cropped_images = rf.center_and_crop_rescale(image_without_batch, dets, scale_factor=scale_factor, shift_factor=shift_factor, aspect_ratio=aspect_ratio)
+        cropped_images, bbox_infos = rf.center_and_crop_rescale(image_without_batch, dets, scale_factor=scale_factor, shift_factor=shift_factor, aspect_ratio=aspect_ratio)
         if len(cropped_images)>=1:
             clamped_index = max(1, min(index_of_face, len(cropped_images)))
             cropped_image = torch.unsqueeze(cropped_images[clamped_index-1], 0)
-            return (cropped_image,)
-        return (image,)
+            left, top, right, bottom = bbox_infos[clamped_index-1]
+            original_size = (right-left, bottom-top)
+            return (cropped_image,(original_size, (left, top, right, bottom)))
+        return (image,(original_size, (left, top, right, bottom)))
 
 NODE_CLASS_MAPPINGS = {
     "AutoCropFaces": AutoCropFaces

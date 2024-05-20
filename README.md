@@ -26,3 +26,6 @@ Recommandation:
 Users might upload extremely large images, so it would be a good idea to first pass through the ["Constrain Image"](https://github.com/pythongosssss/ComfyUI-Custom-Scripts#constrain-image) node.
 
 ![Pass Through Constrain Image first](images/workflow-AutoCropFaces-with-Constrain.png)
+
+It now supports CROP_DATA, which is compatible with [WAS node suite](https://github.com/WASasquatch/was-node-suite-comfyui).
+![Crop and Paste](images/Crop_Data.png)

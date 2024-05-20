@@ -2,7 +2,6 @@ import os
 import time
 import torch
 import torch.backends.cudnn as cudnn
-import cv2
 import numpy as np
 
 from .data import cfg_mnet, cfg_re50

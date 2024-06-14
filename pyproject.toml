@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-autocropfaces"
+description = "Use RetinaFace to detect and automatically crop faces."
+version = "1.0.0"
+license = "LICENSE"
+
+[project.urls]
+Repository = "https://github.com/liusida/ComfyUI-AutoCropFaces"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "ComfyUI-AutoCropFaces"
+Icon = ""

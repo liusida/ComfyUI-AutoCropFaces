@@ -9,7 +9,9 @@ from collections import OrderedDict
 from .net import MobileNetV1 as MobileNetV1
 from .net import FPN as FPN
 from .net import SSH as SSH
+from comfy.model_management import get_torch_device
 
+DEVICE = get_torch_device()
 
 
 class ClassHead(nn.Module):
@@ -47,7 +49,7 @@ class LandmarkHead(nn.Module):
         return out.view(out.shape[0], -1, 10)
 
 class RetinaFace(nn.Module):
-    def __init__(self, cfg = None, phase = 'train', weights_path='', device="cuda"):
+    def __init__(self, cfg = None, phase = 'train', weights_path='', device=DEVICE):
         """
         :param cfg:  Network related settings.
         :param phase: train or test.

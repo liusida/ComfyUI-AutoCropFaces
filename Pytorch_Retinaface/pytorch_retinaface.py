@@ -11,15 +11,29 @@ from .models.retinaface import RetinaFace
 from .utils.box_utils import decode, decode_landm
 
 class Pytorch_RetinaFace:
-    def __init__(self, cfg="mobile0.25", pretrained_path="./weights/mobilenet0.25_Final.pth", weights_path="./weights/mobilenetV1X0.25_pretrain.tar", device="cuda", vis_thres=0.6, top_k=5000, keep_top_k=750, nms_threshold=0.4, confidence_threshold=0.02):
+    def __init__(self, cfg="mobile0.25", pretrained_path="./weights/mobilenet0.25_Final.pth", weights_path="./weights/mobilenetV1X0.25_pretrain.tar", device="auto", vis_thres=0.6, top_k=5000, keep_top_k=750, nms_threshold=0.4, confidence_threshold=0.02):
         self.vis_thres = vis_thres
         self.top_k = top_k
         self.keep_top_k = keep_top_k
         self.nms_threshold = nms_threshold
         self.confidence_threshold = confidence_threshold
         self.cfg = cfg_mnet if cfg=="mobile0.25" else cfg_re50
-        self.device = torch.device(device)
-        self.net = RetinaFace(cfg=self.cfg, weights_path=weights_path, phase='test', device=device).to(self.device)
+        
+        if device == 'auto':
+            # Automatically choose the device
+            if torch.cuda.is_available():
+                self.device = torch.device("cuda")
+            elif torch.backends.mps.is_available():
+                self.device = torch.device("mps")
+            else:
+                self.device = torch.device("cpu")
+        else:
+            # Use the specified device
+            self.device = torch.device(device)
+
+        print("Using device:", self.device)
+
+        self.net = RetinaFace(cfg=self.cfg, weights_path=weights_path, phase='test', device=self.device).to(self.device)
         self.load_model_weights(pretrained_path)
         self.net.eval()
 

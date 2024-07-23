@@ -36,7 +36,7 @@ def main():
 
     # Crop and save each detected face
     cropped_imgs = rf.center_and_crop_rescale(img_raw, dets)
-    for index, cropped_img in enumerate(cropped_imgs):
+    for index, cropped_img in enumerate(cropped_imgs[0]):
         # Save the final image
         os.makedirs(output_dir, exist_ok=True)
         cv2.imwrite(os.path.join(output_dir, f"cropped_face_{index}.jpg"), cropped_img)

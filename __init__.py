@@ -1,4 +1,5 @@
 import torch
+import comfy.utils
 from .Pytorch_Retinaface.pytorch_retinaface import Pytorch_RetinaFace
 
 class AutoCropFaces:
@@ -17,8 +18,14 @@ class AutoCropFaces:
                     "step": 1,
                 }),
                 "index_of_face": ("INT", {
-                    "default": 1,
-                    "min": 1,
+                    "default": 0,
+                    "min": 0,
+                    "step": 1,
+                    "display": "number"
+                }),
+                "selected_number_of_faces": ("INT", {
+                    "default": -1,
+                    "min": -1,
                     "step": 1,
                     "display": "number"
                 }),
@@ -52,24 +59,72 @@ class AutoCropFaces:
 
     CATEGORY = "Faces"
 
-    def auto_crop_faces(self, image, max_number_of_faces, index_of_face, scale_factor, shift_factor, aspect_ratio):
-        original_size = (1, 1)
-        left, top, right, bottom = (0, 0, 1, 1)
-        #TODO: currently only support one single image. No batch.
-        image_without_batch = image[0]
-        right, bottom = image_without_batch.shape[:2]
-        original_size = (right, bottom)
-        image_255 = image_without_batch * 255
+    def auto_crop_faces_in_image (self, image, max_number_of_faces, scale_factor, shift_factor, aspect_ratio, method='lanczos'): 
+        image_255 = image * 255
         rf = Pytorch_RetinaFace(top_k=50, keep_top_k=max_number_of_faces)
         dets = rf.detect_faces(image_255)
-        cropped_images, bbox_infos = rf.center_and_crop_rescale(image_without_batch, dets, scale_factor=scale_factor, shift_factor=shift_factor, aspect_ratio=aspect_ratio)
-        if len(cropped_images)>=1:
-            clamped_index = max(1, min(index_of_face, len(cropped_images)))
-            cropped_image = torch.unsqueeze(cropped_images[clamped_index-1], 0)
-            left, top, right, bottom = bbox_infos[clamped_index-1]
-            original_size = (right-left, bottom-top)
-            return (cropped_image,(original_size, (left, top, right, bottom)))
-        return (image,(original_size, (left, top, right, bottom)))
+        cropped_faces, bbox_info = rf.center_and_crop_rescale(image, dets, scale_factor=scale_factor, shift_factor=shift_factor, aspect_ratio=aspect_ratio)
+
+        # Add a batch dimension to each cropped face
+        cropped_faces_with_batch = [face.unsqueeze(0) for face in cropped_faces]
+        return cropped_faces_with_batch, bbox_info
+
+    def auto_crop_faces(self, image, max_number_of_faces, index_of_face, selected_number_of_faces, scale_factor, shift_factor, aspect_ratio, method='lanczos'):
+
+        selected_faces, detected_cropped_faces = [], []
+        selected_crop_data, detected_crop_data = [], []
+        original_images = []
+
+        remaining_face_count = max_number_of_faces
+        for i in range(image.shape[0]):  # Loop through each image in the batch
+
+            original_images.append(image[i].unsqueeze(0))
+
+            cropped_images, infos = self.auto_crop_faces_in_image(
+                image[i],
+                max_number_of_faces,
+                scale_factor,
+                shift_factor,
+                aspect_ratio,
+                method)
+
+            detected_cropped_faces.extend(cropped_images)
+            detected_crop_data.extend(infos)
+
+            remaining_face_count = remaining_face_count - len(detected_cropped_faces)
+            if remaining_face_count <= 0:
+                break
+
+        if not detected_cropped_faces or len(detected_cropped_faces) == 0:
+            selected_faces = original_images
+            selected_crop_data = [(0, 0, original_images.shape[3], original_images.shape[2])] * original_images.shape[0]
+
+        index_of_face = 0 if index_of_face <= -1 else index_of_face
+        start = max(0, min(index_of_face, len(detected_cropped_faces) - 1))
+        end = start + selected_number_of_faces if selected_number_of_faces > 0 else len(detected_cropped_faces)
+        selected_faces = detected_cropped_faces[start:end]
+        selected_crop_data = detected_crop_data[start:end]
+
+        out = selected_faces[0]
+        if len(selected_faces) == 0: 
+            return (image, ((1, 1), (0, 0, 1, 1)))
+        elif len(selected_faces) <= 1:
+            return (out, selected_crop_data[0])
+
+        shape = out.shape
+        for i in range(1, len(selected_faces)):
+            resized_image = selected_faces[i]
+            if shape != selected_faces[i].shape:
+                resized_image = comfy.utils.common_upscale(
+                    selected_faces[i].movedim(-1, 1),
+                    shape[2],
+                    shape[1],
+                    method,
+                    "" # Only "center" is implemented right now.
+                ).movedim(1, -1)
+            out = torch.cat((out, resized_image), dim=0)
+
+        return (out, selected_crop_data)
 
 NODE_CLASS_MAPPINGS = {
     "AutoCropFaces": AutoCropFaces

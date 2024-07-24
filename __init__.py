@@ -42,11 +42,14 @@ class AutoCropFaces:
                     "max": 1000,
                     "step": 1,
                 }),
-                "aspect_ratio": ("FLOAT", {
-                    "default": 1, 
-                    "min": 0.2,
-                    "max": 5,
-                    "step": 0.1,
+                # "aspect_ratio": ("FLOAT", {
+                #     "default": 1, 
+                #     "min": 0.2,
+                #     "max": 5,
+                #     "step": 0.1,
+                # }),
+                "aspect_ratio": (["9:16", "2:3", "3:4", "4:5", "1:1", "5:4", "4:3", "3:2", "16:9"], {
+                    "default": "1:1",
                 }),
             },
         }
@@ -57,6 +60,10 @@ class AutoCropFaces:
     FUNCTION = "auto_crop_faces"
 
     CATEGORY = "Faces"
+
+    def aspect_ratio_string_to_float(self, str_aspect_ratio="1:1"):
+        a, b = map(float, str_aspect_ratio.split(':'))
+        return a / b
 
     def auto_crop_faces_in_image (self, image, max_number_of_faces, scale_factor, shift_factor, aspect_ratio, method='lanczos'): 
         image_255 = image * 255
@@ -78,6 +85,9 @@ class AutoCropFaces:
         "aspect_ratio" - When we crop, you can have it crop down at a particular aspect ratio.
         "method" - Scaling pixel sampling interpolation method.
         """
+        
+        # Turn aspect ratio to float value
+        aspect_ratio = self.aspect_ratio_string_to_float(aspect_ratio)
 
         selected_faces, detected_cropped_faces = [], []
         selected_crop_data, detected_crop_data = [], []

@@ -1,5 +1,6 @@
 import os
 import time
+import math
 import torch
 import torch.backends.cudnn as cudnn
 import numpy as np
@@ -81,10 +82,13 @@ class Pytorch_RetinaFace:
             face_width = x2 - x1
             face_height = y2 - y1
 
-            # New height and width based on scale factor
-            new_face_height = int(face_height * scale_factor)
-            # new_face_width = int(new_face_height * (face_width / face_height))
-            new_face_width = int(new_face_height / aspect_ratio)
+            default_area = face_width * face_height
+            default_side = math.sqrt(default_area)
+            default_area *= scale_factor
+
+            # New height and width based on aspect_ratio
+            new_face_width = int(default_side * math.sqrt(aspect_ratio))
+            new_face_height = int(default_side / math.sqrt(aspect_ratio))
 
             # Center coordinates of the detected face
             center_x = x1 + face_width // 2

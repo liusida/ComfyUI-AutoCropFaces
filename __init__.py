@@ -130,17 +130,17 @@ class AutoCropFaces:
             return (out, selected_crop_data)
 
         # Determine the index of the face with the maximum width
-        max_width_index = max(range(len(selected_faces)), key=lambda i: selected_faces[i].shape[2])
+        max_width_index = max(range(len(selected_faces)), key=lambda i: selected_faces[i].shape[1])
 
         # Determine the maximum width
-        max_width = selected_faces[max_width_index].shape[2]
-        max_height = selected_faces[max_width_index].shape[1]
+        max_width = selected_faces[max_width_index].shape[1]
+        max_height = selected_faces[max_width_index].shape[2]
         shape = (max_height, max_width)
 
         out = None
         # All images need to have the same width/height to fit into the tensor such that we can output as image batches.
         for face_image in selected_faces:
-            if shape != image.shape[1:3]: # Check all images against the largest image and scale it to that size.
+            if shape != face_image.shape[1:3]: # Determine whether cropped face image size matches largest cropped face image. 
                 face_image = comfy.utils.common_upscale( # This method expects (batch, channel, height, width)
                     face_image.movedim(-1, 1), # Move channel dimension to width dimension
                     max_height, # Height

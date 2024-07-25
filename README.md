@@ -25,7 +25,7 @@ Detect faces and focus on one of them.
 
 * `max_faces_per_image`: The maximum number of faces to detect for each image. (default: 50, min: 1, max: 1000, step: 1)
 
-* `aspect_ratio`: The aspect ratio for cropping. (default: 1, min: 0.2, max: 5, step: 0.1)
+* `aspect_ratio`: The aspect ratio for cropping, specified as `width` : `height`. (default: 1:1)
 
 ![Simple Usage](images/workflow-AutoCropFaces-Simple.png)
 

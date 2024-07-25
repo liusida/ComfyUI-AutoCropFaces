@@ -83,8 +83,8 @@ class Pytorch_RetinaFace:
             face_height = y2 - y1
 
             default_area = face_width * face_height
-            default_side = math.sqrt(default_area)
             default_area *= scale_factor
+            default_side = math.sqrt(default_area)
 
             # New height and width based on aspect_ratio
             new_face_width = int(default_side * math.sqrt(aspect_ratio))

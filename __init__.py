@@ -132,13 +132,14 @@ class AutoCropFaces:
 
         # If we haven't selected anything, then return original images.
         if len(selected_faces) == 0: 
-            selected_crop_data = [(0, 0, img.shape[3], img.shape[2]) for img in original_images]
-            return (image, selected_crop_data)
+            # selected_crop_data = [(0, 0, img.shape[3], img.shape[2]) for img in original_images]
+            return (image, None)
 
         # If there is only one detected face in batch of images, just return that one.
         elif len(selected_faces) <= 1:
             out = selected_faces[0]
-            return (out, selected_crop_data)
+            crop_data = selected_crop_data[0] # to be compatible with WAS
+            return (out, crop_data)
 
         # Determine the index of the face with the maximum width
         max_width_index = max(range(len(selected_faces)), key=lambda i: selected_faces[i].shape[1])
@@ -165,6 +166,7 @@ class AutoCropFaces:
             else:
                 out = torch.cat((out, face_image), dim=0)
 
+        #TODO: WAS doesn't not support multiple faces, so this won't work with WAS.
         return (out, selected_crop_data)
 
 NODE_CLASS_MAPPINGS = {
